@@ -1,0 +1,1215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>烽火东亚 · 四方军棋</title>
+  <style>
+    :root {
+      --ink: #172127;
+      --paper: #e8dcc1;
+      --paper-deep: #c8b68e;
+      --sea: #9ab7bd;
+      --roc: #24558d;
+      --ussr: #b13b33;
+      --japan: #c8a34e;
+      --red: #8e2625;
+      --neutral: #927c5f;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      overflow: hidden;
+      color: var(--ink);
+      font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+      background:
+        radial-gradient(circle at 18% 15%, rgba(255,255,255,.35), transparent 24%),
+        repeating-linear-gradient(8deg, rgba(70,51,25,.028) 0 1px, transparent 1px 7px),
+        #bcae8e;
+    }
+
+    button { font: inherit; }
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-rows: 68px minmax(0, 1fr);
+    }
+
+    header {
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 24px;
+      color: #eee7d5;
+      background: linear-gradient(90deg, #16262b, #223840 70%, #17272d);
+      border-bottom: 3px solid #9f8a5d;
+      box-shadow: 0 5px 18px #1b202088;
+    }
+    .brand { display: flex; align-items: baseline; gap: 14px; min-width: 330px; }
+    .brand h1 { margin: 0; font-size: 27px; letter-spacing: .22em; font-weight: 800; }
+    .brand span { color: #bfae83; font-size: 12px; letter-spacing: .18em; }
+    .round {
+      display: flex; align-items: center; gap: 10px;
+      margin-left: auto; font-family: system-ui, sans-serif; font-size: 13px;
+    }
+    .round strong { font-family: "Noto Serif SC", serif; font-size: 17px; color: #f4d78b; }
+    .header-actions { display: flex; gap: 8px; }
+    .top-btn {
+      color: #eee7d5; background: #ffffff0b; border: 1px solid #d9cda94d;
+      border-radius: 3px; padding: 8px 12px; cursor: pointer;
+    }
+    .top-btn:hover { background: #ffffff18; border-color: #d9cda98c; }
+
+    main { min-height: 0; display: grid; grid-template-columns: 260px minmax(620px, 1fr) 292px; }
+    aside {
+      min-height: 0; overflow: auto; padding: 17px 15px;
+      background: linear-gradient(90deg, #ded0b2, #eadfc5);
+      scrollbar-width: thin;
+    }
+    aside.left { border-right: 1px solid #8a7957; box-shadow: 5px 0 16px #28322d33; }
+    aside.right { border-left: 1px solid #8a7957; box-shadow: -5px 0 16px #28322d33; }
+    .section-title {
+      margin: 4px 0 11px; padding-bottom: 7px;
+      border-bottom: 1px solid #8e7b57; font-size: 14px; letter-spacing: .2em;
+    }
+    .treasury {
+      margin-bottom: 16px; padding: 12px; color: #f4ead3;
+      background: linear-gradient(135deg,#243d45,#315966);
+      border: 1px solid #172d34; box-shadow: inset 0 1px #ffffff2b;
+      font-family: system-ui,sans-serif;
+    }
+    .treasury small { display:block; color:#c7baa0; font-size:10px; letter-spacing:.14em; }
+    .treasury strong { display:block; margin-top:3px; color:#f1cf72; font-size:25px; }
+    .treasury span { font-size:11px; color:#d8cfbd; }
+
+    .faction-card {
+      position: relative; display: grid; grid-template-columns: 38px 1fr auto;
+      align-items: center; gap: 9px; margin-bottom: 8px; padding: 10px 8px;
+      border: 1px solid #8a79565c; background: #fff7e669; border-radius: 3px;
+      font-family: system-ui, sans-serif; transition: .2s;
+    }
+    .faction-card.active { transform: translateX(4px); background: #fff8df; box-shadow: -4px 0 var(--faction); }
+    .faction-card.defeated { opacity: .38; filter: grayscale(1); }
+    .flag {
+      width: 34px; height: 25px; display: grid; place-items: center;
+      color: white; background: var(--faction); border: 1px solid #3c3427;
+      box-shadow: inset 0 0 0 2px #ffffff27; font-family: serif; font-weight: 800;
+    }
+    .faction-name { font-size: 13px; font-weight: 700; }
+    .faction-meta { margin-top: 2px; color: #756c5c; font-size: 10px; }
+    .piece-count { font-weight: 800; font-size: 18px; color: var(--faction); }
+
+    .intel {
+      min-height: 123px; padding: 12px; background: #f2e7ce;
+      border: 1px solid #9e8b63; box-shadow: inset 0 0 20px #705c2b16;
+      font-family: system-ui, sans-serif;
+    }
+    .intel .empty { color: #766d5d; font-size: 12px; line-height: 1.7; }
+    .intel-head { display: flex; justify-content: space-between; align-items: center; }
+    .intel-city { font-family: "Noto Serif SC", serif; font-weight: 800; font-size: 18px; }
+    .intel-kind { color: #786b54; font-size: 11px; }
+    .intel-owner { margin-top: 8px; font-size: 12px; }
+    .intel-piece {
+      margin-top: 9px; padding-top: 8px; border-top: 1px dashed #a99876;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .intel-rank { font-weight: 800; font-size: 17px; }
+    .intel-state { color: #8a392d; font-size: 11px; }
+
+    .rules { margin: 9px 0 0; padding: 0 0 0 18px; color: #4f4a40; font: 12px/1.65 system-ui, sans-serif; }
+    .rules li { margin: 4px 0; }
+    .legend-row { display: flex; align-items: center; gap: 10px; margin: 7px 0; font: 11px system-ui, sans-serif; }
+    .line-sample { width: 40px; border-top: 3px solid #604f38; }
+    .line-sample.road { border-top: 2px dashed #756b55; }
+    .line-sample.sea { border-top: 2px dotted #3c7081; }
+
+    .map-wrap {
+      position: relative; min-width: 0; min-height: 0; overflow: hidden;
+      background: var(--sea);
+    }
+    #map {
+      width: 100%; height: 100%; display: block;
+      background:
+        radial-gradient(ellipse at 70% 40%, #b7ced0 0, #98b5ba 60%, #829fa8 100%);
+      cursor: grab; user-select: none;
+    }
+    #map.dragging { cursor: grabbing; }
+    .map-vignette {
+      pointer-events: none; position: absolute; inset: 0;
+      box-shadow: inset 0 0 45px #293b3e66; z-index: 2;
+    }
+    .compass {
+      position: absolute; right: 20px; bottom: 20px; width: 58px; height: 58px;
+      border: 1px solid #3e4d4c88; border-radius: 50%; color: #344342;
+      display: grid; place-items: center; font-weight: 800; opacity: .65;
+      background: #e8dcc166; pointer-events: none;
+    }
+    .compass::before { content: "北"; position: absolute; top: -17px; font-size: 12px; }
+    .compass i { width: 2px; height: 43px; background: #344342; position: relative; }
+    .compass i::after { content:""; position: absolute; top:-2px; left:-5px; border: 6px solid transparent; border-bottom: 12px solid #344342; transform: translateY(-8px); }
+
+    .land { fill: #d8caab; stroke: #514e42; stroke-width: 2.2; }
+    .land-shadow { fill: #39423d30; transform: translate(5px,7px); }
+    .territory-cell {
+      stroke: #f2e6c8; stroke-width: 1.1; stroke-opacity: .38;
+      fill-opacity: .34; pointer-events: none; transition: fill .35s ease;
+    }
+    .territory-link {
+      fill: none; stroke-linecap: round; stroke-linejoin: round;
+      stroke-width: 24; stroke-opacity: .28; pointer-events: none;
+      transition: stroke .35s ease;
+    }
+    .reference-outline {
+      pointer-events: none; opacity: .9; mix-blend-mode: multiply;
+      filter: sepia(.18) contrast(1.08);
+    }
+    .region { stroke: #88785b; stroke-width: 1; fill: none; opacity: .42; }
+    .country-label {
+      fill: #4b493f; opacity: .45; font-weight: 800; letter-spacing: .35em;
+      paint-order: stroke; stroke: #e4d8bd; stroke-width: 4px;
+    }
+    .water-label { fill: #416973; opacity: .45; letter-spacing: .35em; font-size: 15px; }
+    .route { fill: none; vector-effect: non-scaling-stroke; pointer-events: stroke; }
+    .route.rail { stroke: #564c3b; stroke-width: 3.3; }
+    .route.rail-overlay { stroke: #e4d7b8; stroke-width: 1.2; stroke-dasharray: 5 5; }
+    .route.road { stroke: #6f6652; stroke-width: 2; stroke-dasharray: 5 4; }
+    .route.sea { stroke: #3c7180; stroke-width: 2; stroke-dasharray: 2 5; }
+    .route.valid { stroke: #f2ca5c !important; stroke-width: 5 !important; filter: drop-shadow(0 0 3px #fff4ad); }
+
+    .city-node { cursor: pointer; pointer-events: bounding-box; }
+    .city-node .node-ring {
+      fill: #e8dcc1; stroke: #3e3b31; stroke-width: 2;
+      vector-effect: non-scaling-stroke; transition: .15s;
+    }
+    .city-node:hover .node-ring { fill: #fff3ce; stroke-width: 3; }
+    .city-node.capital .node-ring { stroke-width: 3; }
+    .city-node.port .node-ring { fill: #c3dde0; }
+    .city-node.valid .node-ring {
+      fill: #f7dd7e; stroke: #fff6c7; stroke-width: 4;
+      filter: drop-shadow(0 0 5px #e6b93e);
+    }
+    .city-node.selected .node-ring { fill: #fff2b5; stroke: #ad7727; stroke-width: 4; }
+    .city-dot { fill: #55493a; pointer-events: none; }
+    .city-label {
+      fill: #202825; font-size: 12px; font-weight: 700;
+      paint-order: stroke; stroke: #e8dcc1; stroke-width: 3px; stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .piece { pointer-events: none; }
+    .piece rect {
+      stroke: #f6edda; stroke-width: 1.5; rx: 3;
+      filter: drop-shadow(1px 2px 2px #1d211e88);
+    }
+    .piece text { fill: white; font: 800 11px system-ui, sans-serif; text-anchor: middle; }
+    .piece text { font-size: 9px; }
+    .owner-halo { fill: none; stroke-width: 4; opacity: .42; pointer-events: none; }
+    .hq-star { fill: #f6dd86; stroke: #5e4b28; stroke-width: .8; pointer-events: none; }
+
+    .status-banner {
+      position: absolute; left: 50%; top: 18px; transform: translateX(-50%);
+      z-index: 3; min-width: 330px; padding: 10px 20px; text-align: center;
+      color: #f6edda; background: #17272dea; border: 1px solid #b7a36f;
+      box-shadow: 0 4px 18px #1e252588; font: 13px system-ui, sans-serif;
+      transition: .25s; pointer-events: none;
+    }
+    .status-banner b { color: #f1d274; }
+    .status-banner.flash { transform: translateX(-50%) scale(1.025); background: #6f3029ee; }
+
+    .log { display: flex; flex-direction: column; gap: 7px; font: 11px/1.45 system-ui, sans-serif; }
+    .log-entry { padding: 8px 9px; background: #f5ead3a3; border-left: 3px solid #847557; }
+    .log-entry.combat { border-left-color: #9b322c; }
+    .log-entry.system { color: #716650; font-style: italic; }
+    .log-time { float: right; color: #91846c; font-size: 9px; }
+    .action-box {
+      position: sticky; bottom: -17px; margin: 16px -15px -17px; padding: 13px 15px 16px;
+      background: #d7c7a7f2; border-top: 1px solid #8b7956;
+    }
+    .end-btn {
+      width: 100%; padding: 11px; cursor: pointer; color: #f8edd8;
+      background: #294d59; border: 1px solid #152e35; border-radius: 3px;
+      font-weight: 800; letter-spacing: .15em; box-shadow: inset 0 1px #ffffff38;
+    }
+    .end-btn:hover { background: #356471; }
+    .end-btn:disabled { opacity: .48; cursor: default; }
+    .small-note { margin-top: 8px; color: #6e6454; font: 10px/1.4 system-ui, sans-serif; text-align: center; }
+
+    .modal {
+      display: none; position: fixed; inset: 0; z-index: 20; place-items: center;
+      background: #172326b8; backdrop-filter: blur(3px);
+    }
+    .modal.open { display: grid; }
+    .modal-card {
+      width: min(590px, calc(100vw - 30px)); max-height: 82vh; overflow: auto;
+      padding: 25px 28px; background: #ecdfc2; border: 2px solid #7f6c48;
+      box-shadow: 0 18px 60px #111a1ddd;
+    }
+    .modal-card h2 { margin: 0 0 14px; letter-spacing: .18em; }
+    .modal-card p, .modal-card li { font: 13px/1.7 system-ui, sans-serif; }
+    .modal-close { float: right; border: 0; background: none; font-size: 22px; cursor: pointer; }
+    .city-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:11px; }
+    .city-action {
+      padding:8px; border:1px solid #766746; background:#e5d5b3; cursor:pointer;
+      color:#2c3937; font-weight:800;
+    }
+    .city-action:hover { background:#f2e2bd; }
+    .city-action:disabled { opacity:.42; cursor:default; }
+    .field { display:grid; gap:5px; margin:12px 0; font:12px system-ui,sans-serif; }
+    .field input,.field select {
+      width:100%; padding:9px; border:1px solid #8c7954; background:#fff9e9; font:14px system-ui,sans-serif;
+    }
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+    .modal-btn { padding:9px 15px; border:1px solid #665736; cursor:pointer; background:#dbc9a2; }
+    .modal-btn.primary { color:white; background:#294d59; border-color:#19343b; }
+    .modal-btn.danger { color:white; background:#87372e; border-color:#5d211c; }
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; font:11px system-ui,sans-serif; }
+    .stat-grid div { padding:6px; background:#e3d4b6; }
+    .attached-forces {
+      margin-top:8px; padding:7px 9px; border:2px solid #d9574f;
+      background:#fff1d5; font:11px/1.5 system-ui,sans-serif;
+    }
+    .attached-forces b { display:block; margin-bottom:3px; color:#7d2d28; }
+
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 215px minmax(550px, 1fr) 240px; }
+      .brand span { display: none; }
+      .brand { min-width: 240px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand"><h1>烽火东亚</h1><span>1937 · 经济与兵力推演</span></div>
+      <div class="round">当前行动：<strong id="turnName">中华民国</strong><span id="turnMode">（玩家）</span> · 第 <b id="roundNo">1</b> 轮</div>
+      <div class="header-actions">
+        <button class="top-btn" id="rulesBtn">战地手册</button>
+        <button class="top-btn" id="resetBtn">重新部署</button>
+      </div>
+    </header>
+
+    <main>
+      <aside class="left">
+        <div class="treasury">
+          <small>当前国库 · <span id="moneyFaction">中华民国</span></small>
+          <strong>¥ <span id="moneyCount">10,000</span></strong>
+          <span>城市收入将在本阵营回合结束时结算</span>
+        </div>
+        <h2 class="section-title">参战阵营</h2>
+        <div id="factions"></div>
+
+        <h2 class="section-title" style="margin-top:19px">节点情报</h2>
+        <div class="intel" id="intel">
+          <div class="empty">点击己方城市进行发展、招募或发动进攻。铁路可连续行军两段，公路与海路一段。</div>
+        </div>
+
+        <h2 class="section-title" style="margin-top:19px">交通图例</h2>
+        <div class="legend-row"><i class="line-sample"></i>铁路干线</div>
+        <div class="legend-row"><i class="line-sample road"></i>公路 / 驿道</div>
+        <div class="legend-row"><i class="line-sample sea"></i>海上航线</div>
+      </aside>
+
+      <section class="map-wrap">
+        <svg id="map" viewBox="0 0 1400 1122" aria-label="二战东亚战棋地图">
+          <defs>
+            <filter id="paperNoise">
+              <feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="3" seed="8" result="n"/>
+              <feBlend in="SourceGraphic" in2="n" mode="multiply"/>
+            </filter>
+            <pattern id="waves" width="42" height="30" patternUnits="userSpaceOnUse">
+              <path d="M0 15 Q10 8 20 15 T42 15" fill="none" stroke="#d5e4e2" stroke-width="1" opacity=".25"/>
+            </pattern>
+            <clipPath id="landClip">
+              <path d="M25 515 L62 470 145 430 195 350 286 320 310 248 390 196 485 222 555 194 660 235 755 232 850 180 940 209 1015 272 1088 330 1061 410 1005 474 965 563 905 662 827 748 749 835 662 912 570 922 485 878 418 818 330 786 244 745 150 684 73 622Z"/>
+              <path d="M300 235 L390 190 485 215 550 180 655 225 755 225 842 166 888 188 866 294 774 365 650 414 510 390 410 340 327 292Z"/>
+              <path d="M842 55 L940 43 1027 77 1080 149 1116 253 1084 330 1018 303 963 238 887 190 846 151Z"/>
+              <path d="M974 371 Q1012 344 1041 371 L1053 441 1035 510 1002 570 976 541 970 465Z"/>
+              <path d="M1160 60 Q1215 45 1250 93 L1271 174 1244 230 1191 220 1155 165Z"/>
+              <path d="M1200 271 Q1242 238 1270 278 L1289 360 1318 423 1290 511 1248 535 1218 472 1190 391Z"/>
+              <path d="M1165 485 Q1194 465 1215 490 L1200 528 1169 531Z"/>
+              <path d="M1110 490 Q1146 461 1171 496 L1153 547 1112 557 1095 525Z"/>
+              <path d="M838 810 Q875 775 910 805 L901 885 867 923 835 878Z"/>
+              <path d="M617 932 Q662 905 697 935 L681 984 635 992 608 960Z"/>
+            </clipPath>
+          </defs>
+          <rect width="1400" height="1122" fill="url(#waves)"/>
+          <g id="viewport">
+            <g id="baseMap" style="display:none">
+              <!-- 中国大陆轮廓：渤海湾、辽东/山东半岛、东南海岸与雷州半岛均单独刻画 -->
+              <path class="land-shadow" d="M65 69 L191 58 259 82 348 59 437 82 535 61 634 91 730 65 802 79 827 104 820 132 791 151 765 172 748 203 716 226 704 217 714 194 710 175 681 188 653 216 630 230 648 244 683 247 705 260 691 276 660 282 627 272 614 292 645 314 690 330 731 349 741 371 727 397 711 420 724 448 711 476 681 500 655 523 627 537 615 558 607 585 584 594 566 578 557 552 510 577 461 596 417 610 337 583 276 546 208 511 157 449 123 382 107 306 62 243 46 165Z"/>
+              <path class="land" d="M65 69 L191 58 259 82 348 59 437 82 535 61 634 91 730 65 802 79 827 104 820 132 791 151 765 172 748 203 716 226 704 217 714 194 710 175 681 188 653 216 630 230 648 244 683 247 705 260 691 276 660 282 627 272 614 292 645 314 690 330 731 349 741 371 727 397 711 420 724 448 711 476 681 500 655 523 627 537 615 558 607 585 584 594 566 578 557 552 510 577 461 596 417 610 337 583 276 546 208 511 157 449 123 382 107 306 62 243 46 165Z"/>
+
+              <!-- 黑龙江北境与外东北：沿黑龙江、乌苏里江伸向太平洋 -->
+              <path class="land" d="M770 42 Q825 19 884 28 L925 45 939 70 925 101 897 119 858 132 835 157 807 166 785 144 794 113 778 83Z"/>
+              <path class="region" d="M785 83 Q820 91 844 79 T901 70"/>
+              <path class="region" d="M807 166 Q825 129 858 132"/>
+
+              <!-- 朝鲜半岛：接于吉林东南、辽东以东 -->
+              <path class="land" d="M765 158 Q790 151 809 169 L816 199 806 226 820 257 814 287 795 309 779 289 773 259 778 231 765 205Z"/>
+
+              <!-- 库页岛与千岛群岛 -->
+              <path class="land" d="M922 8 Q942 20 946 43 L940 68 947 91 935 111 924 88 926 64 916 38Z"/>
+              <ellipse class="land" cx="952" cy="118" rx="5" ry="9"/>
+              <ellipse class="land" cx="961" cy="137" rx="4" ry="7"/>
+              <ellipse class="land" cx="969" cy="154" rx="3.5" ry="6"/>
+
+              <!-- 日本列岛：放大后的北海道、本州、四国与九州 -->
+              <path class="land" d="M895 87 L927 70 964 77 984 101 976 132 947 148 913 139 895 116Z"/>
+              <path class="land" d="M936 151 Q963 134 982 151 L992 177 1017 190 1037 211 1059 228 1080 252 1088 278 1078 302 1055 309 1035 292 1018 274 996 261 976 239 956 222 940 194Z"/>
+              <path class="land" d="M965 261 Q988 247 1008 258 L1002 280 977 286 960 275Z"/>
+              <path class="land" d="M914 270 Q938 251 960 267 L956 294 938 316 913 306 905 287Z"/>
+              <ellipse class="land" cx="900" cy="302" rx="9" ry="13"/>
+
+              <!-- 台湾、海南及沿海岛屿 -->
+              <path class="land" d="M755 449 Q788 421 813 450 L800 505 771 523 749 489Z"/>
+              <path class="land" d="M558 605 Q583 585 614 598 L625 620 614 646 588 658 564 646 553 625Z"/>
+              <ellipse class="land" cx="669" cy="541" rx="5" ry="3"/>
+              <ellipse class="land" cx="649" cy="547" rx="3" ry="2"/>
+
+              <!-- 琉球群岛：台湾东北至九州西南的弧形岛链 -->
+              <ellipse class="land" cx="813" cy="445" rx="4" ry="7" transform="rotate(-28 813 445)"/>
+              <ellipse class="land" cx="826" cy="422" rx="3.5" ry="6" transform="rotate(-30 826 422)"/>
+              <ellipse class="land" cx="840" cy="399" rx="4" ry="8" transform="rotate(-32 840 399)"/>
+              <ellipse class="land" cx="854" cy="375" rx="7" ry="13" transform="rotate(-28 854 375)"/>
+              <ellipse class="land" cx="872" cy="349" rx="3.5" ry="7" transform="rotate(-28 872 349)"/>
+              <ellipse class="land" cx="890" cy="323" rx="3" ry="6" transform="rotate(-25 890 323)"/>
+              <text class="water-label" x="828" y="372" font-size="10" transform="rotate(-57 828 372)">琉球群岛</text>
+
+              <path class="region" d="M110 95 Q160 162 145 226 T184 348"/>
+              <path class="region" d="M216 71 Q236 145 213 203 T245 324"/>
+              <path class="region" d="M333 65 Q346 129 323 193 T356 303"/>
+              <path class="region" d="M437 83 Q450 157 420 230 T457 347"/>
+              <path class="region" d="M538 65 Q552 135 531 207 T564 323"/>
+              <path class="region" d="M636 91 Q620 176 649 247 T626 376"/>
+              <path class="region" d="M732 67 Q709 148 736 216 T713 344"/>
+              <path class="region" d="M116 307 Q206 287 285 314 T458 302"/>
+              <path class="region" d="M158 449 Q247 413 326 450 T488 431"/>
+              <path class="region" d="M276 546 Q339 503 419 523 T557 537"/>
+              <path class="region" d="M482 430 Q562 389 636 420 T740 422"/>
+
+              <text class="country-label" x="315" y="345" font-size="26">中华民国</text>
+              <text class="country-label" x="506" y="115" font-size="19">蒙古</text>
+              <text class="country-label" x="751" y="137" font-size="18" transform="rotate(18 751 137)">满洲</text>
+              <text class="country-label" x="782" y="205" font-size="13" transform="rotate(72 782 205)">朝鲜</text>
+              <text class="country-label" x="825" y="82" font-size="15">外东北</text>
+              <text class="country-label" x="1000" y="205" font-size="18" transform="rotate(52 1000 205)">日本</text>
+              <text class="water-label" x="923" y="58" font-size="10" transform="rotate(78 923 58)">库页岛</text>
+              <text class="water-label" x="578" y="648" font-size="10">海南岛</text>
+              <text class="water-label" x="884" y="350">东 海</text>
+              <text class="water-label" x="800" y="617">南 海</text>
+            </g>
+            <g id="territories" clip-path="url(#landClip)"></g>
+            <image class="reference-outline" href="reference-map.png" x="0" y="0" width="1400" height="1122" preserveAspectRatio="none"/>
+            <g id="territoryLinks"></g>
+            <g id="routes"></g>
+            <g id="nodes"></g>
+          </g>
+        </svg>
+        <div class="status-banner" id="status">选择一枚 <b>蓝色棋子</b> 开始行动</div>
+        <div class="compass"><i></i></div>
+        <div class="map-vignette"></div>
+      </section>
+
+      <aside class="right">
+        <h2 class="section-title">战况电报</h2>
+        <div class="log" id="log"></div>
+        <div class="action-box">
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font:12px system-ui,sans-serif">
+            <input type="checkbox" id="autoDevelop"> 自动发展（每城 ¥1,000）
+          </label>
+          <button class="end-btn" id="endTurnBtn">结束行动并结算</button>
+          <div class="small-note">每座城市每回合可发展一次、进攻一次<br>另外三方由电脑指挥</div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal" id="rulesModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>×</button>
+      <h2>战地手册</h2>
+      <p>这是一套四方经济与兵力推演规则。开局可选择一个阵营，其余阵营由电脑指挥。</p>
+      <ol>
+        <li>城市通常每回合提供 ¥1,000；上海、南京、香港、东京、哈尔滨、新京提供 ¥2,000。发展一次消耗 ¥1,000，使该城永久收入增加 ¥100。</li>
+        <li>每 1 金钱可招募 0.5 兵力。每座城市每回合可发展一次、进攻一次。</li>
+        <li>铁路可连续行军两段，但中转站必须由己方控制；公路与海路只能行军一段。</li>
+        <li>兵力可按相同移动规则转移至己方城市。骑兵团、炮团等编组会保留独立兵力和装备系数。</li>
+        <li>战力值＝兵力 × 战斗力 × 装备系数。战力较小一方损失 66.7% 兵力，较大一方损失 33.3%，败军残部随机退往相邻己方城市。</li>
+        <li>骑兵团在阵营基础装备系数上额外 +1.5，炮团额外 +3。</li>
+        <li>《双十协定》：第 1—3 回合中华民国不能进攻中国红军，第 4 回合自动解除。</li>
+        <li>指挥部失守后，全军未来三回合战斗力下降 50%，并须立即选择一个己方城市作为新指挥部。</li>
+        <li>占领后可扫荡，获得等同占领部队兵力的金钱，但该部队战斗力永久降低 1。</li>
+      </ol>
+      <p>地图与交通线参考 1930 年代历史格局进行了游戏化抽象，不代表精确疆界或逐年线路状态。</p>
+    </div>
+  </div>
+
+  <div class="modal" id="actionModal">
+    <div class="modal-card" id="actionModalCard"></div>
+  </div>
+
+  <div class="modal open" id="factionModal">
+    <div class="modal-card">
+      <h2>选择指挥阵营</h2>
+      <p>选择你要指挥的阵营，其他三个阵营由电脑控制。</p>
+      <div class="city-actions" id="factionChoices"></div>
+    </div>
+  </div>
+
+  <script>
+    const FACTIONS = {
+      roc: { name: "中华民国", short: "国", color: "#24558d", player: true },
+      ussr: { name: "苏联", short: "苏", color: "#b13b33" },
+      japan: { name: "日本", short: "日", color: "#c8a34e" },
+      red: { name: "中国红军", short: "红", color: "#8e2625" },
+      neutral: { name: "中立驻防", short: "中", color: "#756c61" }
+    };
+
+    const NODES = [
+      {id:"urumqi",name:"迪化",x:116,y:173,kind:"省会"},{id:"lhasa",name:"拉萨",x:151,y:398,kind:"省会"},
+      {id:"xining",name:"西宁",x:281,y:287,kind:"省会"},{id:"lanzhou",name:"兰州",x:326,y:282,kind:"省会"},
+      {id:"yinchuan",name:"银川",x:377,y:238,kind:"省会"},{id:"suiyuan",name:"归绥",x:463,y:197,kind:"省会"},
+      {id:"taiyuan",name:"太原",x:493,y:280,kind:"省会"},{id:"yanan",name:"延安",x:415,y:307,kind:"根据地"},
+      {id:"qingyang",name:"庆阳",x:378,y:321,kind:"红军根据地"},{id:"yanchi",name:"盐池",x:399,y:263,kind:"红军根据地"},
+      {id:"xian",name:"西安",x:427,y:349,kind:"省会"},{id:"chengdu",name:"成都",x:344,y:415,kind:"省会"},
+      {id:"chongqing",name:"重庆",x:413,y:425,kind:"重镇"},{id:"kunming",name:"昆明",x:346,y:527,kind:"省会"},
+      {id:"guiyang",name:"贵阳",x:435,y:496,kind:"省会"},{id:"nanning",name:"南宁",x:521,y:555,kind:"省会"},
+      {id:"gulf",name:"广州湾",x:586,y:565,kind:"租借港",port:true},{id:"guangzhou",name:"广州",x:627,y:517,kind:"省会"},
+      {id:"macau",name:"澳门",x:649,y:540,kind:"租借港",port:true},{id:"hongkong",name:"香港",x:666,y:531,kind:"租借港",port:true},
+      {id:"fuzhou",name:"福州",x:719,y:465,kind:"省会",port:true},{id:"taipei",name:"台北",x:779,y:475,kind:"重镇",port:true},
+      {id:"nanchang",name:"南昌",x:616,y:429,kind:"省会"},{id:"changsha",name:"长沙",x:534,y:431,kind:"省会"},
+      {id:"wuhan",name:"武汉",x:553,y:368,kind:"重镇",capital:true},{id:"hefei",name:"合肥",x:629,y:344,kind:"省会"},
+      {id:"nanjing",name:"南京",x:674,y:348,kind:"首都",capital:true},{id:"hangzhou",name:"杭州",x:704,y:385,kind:"省会"},
+      {id:"shanghai",name:"上海",x:733,y:361,kind:"大城市",port:true},{id:"zhengzhou",name:"郑州",x:548,y:304,kind:"省会"},
+      {id:"jinan",name:"济南",x:626,y:269,kind:"省会"},{id:"qingdao",name:"青岛",x:681,y:281,kind:"港口",port:true},
+      {id:"beijing",name:"北平",x:585,y:220,kind:"古都",capital:true},{id:"tianjin",name:"天津",x:618,y:227,kind:"大城市",port:true},
+      {id:"shijiazhuang",name:"石家庄",x:553,y:253,kind:"重镇"},{id:"kaifeng",name:"开封",x:576,y:310,kind:"省会"},
+      {id:"dalian",name:"大连",x:702,y:217,kind:"港口",port:true},{id:"weihai",name:"威海",x:678,y:251,kind:"港口",port:true},
+      {id:"shenyang",name:"奉天",x:706,y:166,kind:"省会"},{id:"changchun",name:"新京",x:730,y:126,kind:"首都",capital:true},
+      {id:"harbin",name:"哈尔滨",x:752,y:88,kind:"大城市"},{id:"qiqihar",name:"齐齐哈尔",x:687,y:82,kind:"省会"},
+      {id:"chengde",name:"承德",x:636,y:190,kind:"省会"},{id:"hohhot2",name:"张家口",x:525,y:205,kind:"重镇"},
+      {id:"chita",name:"赤塔",x:735,y:43,kind:"远东重镇"},{id:"blago",name:"海兰泡",x:815,y:70,kind:"远东重镇"},
+      {id:"khab",name:"伯力",x:875,y:93,kind:"远东重镇"},{id:"vlad",name:"海参崴",x:825,y:153,kind:"远东港口",port:true},
+      {id:"pyongyang",name:"平壤",x:790,y:205,kind:"朝鲜重镇"},{id:"seoul",name:"京城",x:793,y:246,kind:"朝鲜重镇"},
+      {id:"busan",name:"釜山",x:807,y:282,kind:"港口",port:true},{id:"tokyo",name:"东京",x:1062,y:276,kind:"首都",capital:true,port:true},
+      {id:"sendai",name:"仙台",x:1038,y:216,kind:"大城市",port:true},{id:"kanazawa",name:"金泽",x:994,y:224,kind:"大城市"},
+      {id:"osaka",name:"大阪",x:982,y:269,kind:"大城市",port:true},{id:"nagoya",name:"名古屋",x:1017,y:259,kind:"大城市"},
+      {id:"hiroshima",name:"广岛",x:950,y:280,kind:"大城市",port:true},{id:"fukuoka",name:"福冈",x:930,y:291,kind:"大城市",port:true},
+      {id:"nagasaki",name:"长崎",x:911,y:301,kind:"港口",port:true},{id:"sapporo",name:"札幌",x:941,y:108,kind:"大城市",port:true},
+      {id:"yuzhno",name:"南萨哈林斯克",x:1260,y:285,kind:"南库页重镇",port:true},
+      {id:"tushan",name:"图山",x:1245,y:145,kind:"北库页重镇",port:true},
+      {id:"naha",name:"那霸",x:854,y:375,kind:"琉球港口",port:true},
+      {id:"ulaan",name:"乌兰巴托",x:546,y:107,kind:"首都",capital:true},
+      {id:"uliastai",name:"乌里雅苏台",x:500,y:295,kind:"蒙古西部重镇"},
+      {id:"kashgar",name:"喀什",x:72,y:249,kind:"重镇"},{id:"guilin",name:"桂林",x:535,y:501,kind:"重镇"},
+      {id:"haikou",name:"海口",x:592,y:620,kind:"省会",port:true}
+    ];
+
+    // Individually calibrated against the supplied 1400×1122 outline.
+    // The source drawing is not a regular lon/lat projection, so explicit positions are
+    // substantially more accurate than applying one global geographic formula.
+    const BOARD_POS = {
+      kashgar:[72,493], urumqi:[319,345], lhasa:[407,704], xining:[503,538],
+      lanzhou:[565,540], yinchuan:[635,485], suiyuan:[773,430], taiyuan:[700,487],
+      yanan:[650,535], qingyang:[621,565], yanchi:[642,502], xian:[670,596],
+      chengdu:[565,670], chongqing:[635,704], kunming:[505,818], guiyang:[620,772],
+      nanning:[644,855], gulf:[630,900], guangzhou:[705,850], macau:[720,875],
+      hongkong:[736,872], fuzhou:[850,783], taipei:[891,834], nanchang:[747,712],
+      changsha:[705,729], wuhan:[735,657], hefei:[838,657], nanjing:[810,636],
+      hangzhou:[887,689], shanghai:[908,669], zhengzhou:[729,582], jinan:[790,530],
+      qingdao:[846,559], beijing:[824,466], tianjin:[861,469], shijiazhuang:[770,500],
+      kaifeng:[754,596], dalian:[908,473], weihai:[879,525], shenyang:[940,405],
+      changchun:[979,350], harbin:[1004,299], qiqihar:[930,279], chengde:[850,410],
+      hohhot2:[815,432], chita:[880,132], blago:[1037,176], khab:[1111,232],
+      vlad:[1094,389], pyongyang:[930,463], seoul:[944,526], busan:[1018,562],
+      sapporo:[1274,414], sendai:[1245,467], tokyo:[1250,574], kanazawa:[1179,537],
+      nagoya:[1210,573], osaka:[1168,590], hiroshima:[1121,609], fukuoka:[1071,640],
+      nagasaki:[1048,665], naha:[966,799], ulaan:[705,294], guilin:[655,807],
+      haikou:[653,951], yuzhno:[1265,260], tushan:[1248,125], uliastai:[475,292]
+    };
+    const MAP_W=1400, MAP_H=1122;
+    NODES.forEach(n=>{
+      if(BOARD_POS[n.id]) [n.x,n.y]=BOARD_POS[n.id];
+    });
+
+    const R = (a,b,type="rail") => ({a,b,type});
+    const ROUTES = [
+      R("kashgar","urumqi","road"),R("urumqi","lanzhou","road"),R("lhasa","xining","road"),R("lhasa","chengdu","road"),
+      R("xining","lanzhou"),R("lanzhou","yinchuan"),R("lanzhou","xian"),R("lanzhou","chengdu","road"),
+      R("yinchuan","suiyuan"),R("yinchuan","yanchi","road"),R("yanchi","yanan","road"),R("yanchi","qingyang","road"),
+      R("yinchuan","yanan","road"),R("suiyuan","hohhot2"),R("suiyuan","ulaan","road"),
+      R("hohhot2","beijing"),R("hohhot2","taiyuan"),R("yanan","xian","road"),R("yanan","taiyuan","road"),
+      R("yanan","qingyang","road"),R("qingyang","xian","road"),R("qingyang","lanzhou","road"),
+      R("xian","taiyuan"),R("xian","zhengzhou"),R("xian","chengdu","road"),R("xian","chongqing","road"),
+      R("chengdu","chongqing"),R("chengdu","kunming","road"),R("chongqing","guiyang"),R("chongqing","wuhan"),
+      R("kunming","guiyang"),R("kunming","nanning","road"),R("guiyang","changsha"),R("guiyang","guilin","road"),
+      R("guilin","nanning"),R("guilin","changsha"),R("guilin","guangzhou"),R("nanning","gulf"),R("nanning","guangzhou"),
+      R("gulf","haikou","sea"),R("guangzhou","macau"),R("guangzhou","hongkong"),R("guangzhou","changsha"),
+      R("guangzhou","nanchang"),R("macau","hongkong","sea"),R("hongkong","fuzhou","sea"),R("haikou","hongkong","sea"),
+      R("changsha","wuhan"),R("changsha","nanchang"),R("nanchang","fuzhou"),R("nanchang","hangzhou"),
+      R("wuhan","zhengzhou"),R("wuhan","hefei"),R("wuhan","nanjing"),R("hefei","nanjing"),R("hefei","jinan"),
+      R("nanjing","hangzhou"),R("nanjing","shanghai"),R("hangzhou","shanghai"),R("hangzhou","fuzhou"),
+      R("fuzhou","taipei","sea"),R("shanghai","qingdao","sea"),R("shanghai","nagasaki","sea"),
+      R("zhengzhou","taiyuan"),R("zhengzhou","shijiazhuang"),R("zhengzhou","kaifeng"),R("kaifeng","jinan"),
+      R("shijiazhuang","beijing"),R("shijiazhuang","taiyuan"),R("beijing","tianjin"),R("beijing","chengde"),
+      R("tianjin","jinan"),R("tianjin","dalian","sea"),R("jinan","qingdao"),R("qingdao","weihai"),
+      R("weihai","dalian","sea"),R("chengde","shenyang"),R("dalian","shenyang"),R("shenyang","changchun"),
+      R("changchun","harbin"),R("harbin","qiqihar"),R("qiqihar","chita"),R("chita","blago"),R("blago","khab"),
+      R("harbin","blago"),R("harbin","khab"),R("harbin","vlad"),R("vlad","khab"),R("dalian","pyongyang","sea"),R("vlad","pyongyang"),R("pyongyang","seoul"),
+      R("seoul","busan"),R("busan","fukuoka","sea"),R("vlad","sapporo","sea"),R("sapporo","sendai","sea"),
+      R("tushan","yuzhno","road"),R("tushan","khab","sea"),R("yuzhno","sapporo","sea"),
+      R("uliastai","ulaan","road"),R("uliastai","urumqi","road"),
+      R("taipei","naha","sea"),R("naha","nagasaki","sea"),R("nagasaki","fukuoka"),R("fukuoka","hiroshima"),R("hiroshima","osaka"),R("osaka","kanazawa"),
+      R("osaka","nagoya"),R("kanazawa","sendai"),R("nagoya","tokyo"),R("sendai","tokyo")
+    ].filter(r => NODES.some(n=>n.id===r.a) && NODES.some(n=>n.id===r.b));
+
+    const BASE_COMBAT = {roc:55,japan:80,ussr:85,red:100,neutral:90};
+    const EQUIPMENT = {roc:1,japan:1.8,ussr:2,red:.8,neutral:2.5};
+    const UNIT_EQUIPMENT_BONUS = {"骑兵团":1.5,"炮团":3};
+    const RICH_CITIES = new Set(["shanghai","nanjing","hongkong","tokyo","harbin","changchun"]);
+    // 初始城市配置：以后可直接修改对应城市的 troops 数字。
+    // unit 仅用于兵种标注和装备加成，不再决定兵力。
+    const INITIAL_CITIES = {
+      roc: {
+        nanjing:{troops:100,unit:"指挥部"}, wuhan:{troops:270000,unit:"主力军"}, xian:{troops:90000,unit:"主力军"},
+        chongqing:{troops:27000,unit:"主力军"}, guangzhou:{troops:9000,unit:"主力军"}, chengdu:{troops:3000,unit:"主力军"},
+        zhengzhou:{troops:1000,unit:"主力军"}, kaifeng:{troops:1000,unit:"主力军"}, jinan:{troops:300,unit:"主力军"}, lanzhou:{troops:100,unit:"主力军"},
+        shanghai:{troops:30,unit:"民兵"}, changsha:{troops:2500,unit:"炮团"}, kunming:{troops:2500,unit:"骑兵团"},
+        hefei:{troops:2500,unit:"骑兵团"}, nanchang:{troops:3000,unit:"主力军"}, fuzhou:{troops:1000,unit:"主力军"},
+        hangzhou:{troops:300,unit:"主力军"}, nanning:{troops:100,unit:"主力军"}, haikou:{troops:30,unit:"民兵"},
+        urumqi:{troops:27000,unit:"主力军"}, kashgar:{troops:100,unit:"主力军"}, taiyuan:{troops:9000,unit:"主力军"},
+        shijiazhuang:{troops:3000,unit:"主力军"}, beijing:{troops:90000,unit:"主力军"}, hohhot2:{troops:1000,unit:"主力军"},
+        suiyuan:{troops:9000,unit:"主力军"}, lhasa:{troops:27000,unit:"主力军"}, tianjin:{troops:300,unit:"主力军"},
+        yinchuan:{troops:100,unit:"主力军"}, xining:{troops:3000,unit:"主力军"}, guilin:{troops:1000,unit:"主力军"},
+        guiyang:{troops:30,unit:"民兵"}
+      },
+      red: {
+        yanan:{troops:100,unit:"指挥部"}, qingyang:{troops:9000,unit:"主力军"}, yanchi:{troops:30,unit:"民兵"}
+      },
+      japan: {
+        tokyo:{troops:100,unit:"指挥部"}, osaka:{troops:270000,unit:"主力军"}, shenyang:{troops:90000,unit:"主力军"},
+        changchun:{troops:27000,unit:"主力军"}, dalian:{troops:9000,unit:"主力军"}, seoul:{troops:3000,unit:"主力军"},
+        pyongyang:{troops:1000,unit:"主力军"}, busan:{troops:300,unit:"主力军"}, nagoya:{troops:100,unit:"主力军"},
+        qingdao:{troops:30,unit:"民兵"}, sapporo:{troops:2500,unit:"炮团"}, weihai:{troops:2500,unit:"骑兵团"},
+        taipei:{troops:2500,unit:"骑兵团"}, sendai:{troops:9000,unit:"主力军"}, kanazawa:{troops:1000,unit:"主力军"},
+        hiroshima:{troops:300,unit:"主力军"}, fukuoka:{troops:30,unit:"民兵"}, nagasaki:{troops:2500,unit:"骑兵团"},
+        naha:{troops:100,unit:"主力军"}, chengde:{troops:27000,unit:"主力军"}, harbin:{troops:90000,unit:"主力军"},
+        qiqihar:{troops:3000,unit:"主力军"}, yuzhno:{troops:1000,unit:"主力军"}
+      },
+      ussr: {
+        khab:{troops:100,unit:"指挥部"}, vlad:{troops:270000,unit:"主力军"}, ulaan:{troops:9000,unit:"主力军"},
+        chita:{troops:2500,unit:"炮团"}, blago:{troops:2500,unit:"骑兵团"}, tushan:{troops:300,unit:"主力军"},
+        uliastai:{troops:3000,unit:"主力军"}
+      },
+      neutral: {
+        hongkong:{troops:2500,unit:"炮团"}, macau:{troops:2500,unit:"炮团"}, gulf:{troops:2500,unit:"炮团"}
+      }
+    };
+
+    let state, selected = null, busy = false, lastIntel = "nanjing";
+    let order = ["roc","japan","ussr","red"];
+    const svgNS = "http://www.w3.org/2000/svg";
+    const byId = id => NODES.find(n => n.id === id);
+    const el = id => document.getElementById(id);
+    const fmt = n => Math.max(0,Math.round(n)).toLocaleString("zh-CN");
+
+    function initialState(playerFaction="roc") {
+      const pieces = [];
+      let p = 0;
+      Object.entries(INITIAL_CITIES).forEach(([faction, cities]) => Object.entries(cities).forEach(([node,config]) => {
+        const equipmentBonus=UNIT_EQUIPMENT_BONUS[config.unit]||0;
+        pieces.push({
+          id:"p"+(++p), faction, node, origin:config.unit, troops:config.troops,
+          combat:BASE_COMBAT[faction], equipment:EQUIPMENT[faction]+equipmentBonus,
+          equipmentBonus, alive:true,
+          formations:[{unit:config.unit,troops:config.troops,equipment:EQUIPMENT[faction]+equipmentBonus}],
+          incomeBonus:0, developed:false, attacked:false, transferred:false
+        });
+      }));
+      Object.keys(FACTIONS).forEach(f=>FACTIONS[f].player=f===playerFaction);
+      order=[playerFaction,...["roc","japan","ussr","red"].filter(f=>f!==playerFaction)];
+      return {
+        turn:0, round:1, pieces, defeated:[], playerFaction,
+        money:{roc:200000,japan:500000,ussr:300000,red:50000,neutral:0},
+        autoDevelop:false, turnStarted:false, treatyShown:false,
+        commandPenalty:{roc:0,japan:0,ussr:0,red:0,neutral:0},
+        commandCity:{roc:"nanjing",japan:"tokyo",ussr:"khab",red:"yanan",neutral:null},
+        pendingCommandFaction:null
+      };
+    }
+
+    function pieceAt(node) { return state?.pieces.find(p => p.alive && p.node === node); }
+    function routeBetween(a,b) { return ROUTES.find(r=>(r.a===a&&r.b===b)||(r.a===b&&r.b===a)); }
+    function neighbors(node) { return ROUTES.filter(r=>r.a===node||r.b===node).map(r=>r.a===node?r.b:r.a); }
+    function movementTargets(node,faction) {
+      const out=new Set(neighbors(node).filter(id=>pieceAt(id)?.faction===faction));
+      ROUTES.filter(r=>(r.a===node||r.b===node)&&r.type==="rail").forEach(first=>{
+        const mid=first.a===node?first.b:first.a, guard=pieceAt(mid);
+        if(!guard||guard.faction!==faction)return;
+        ROUTES.filter(r=>(r.a===mid||r.b===mid)&&r.type==="rail").forEach(second=>{
+          const target=second.a===mid?second.b:second.a;
+          if(target!==node&&pieceAt(target)?.faction===faction)out.add(target);
+        });
+      });
+      return [...out];
+    }
+    function attackTargets(node,faction) {
+      const out=new Set(neighbors(node));
+      ROUTES.filter(r=>(r.a===node||r.b===node)&&r.type==="rail").forEach(first=>{
+        const mid=first.a===node?first.b:first.a, guard=pieceAt(mid);
+        if(!guard || guard.faction!==faction) return;
+        ROUTES.filter(r=>(r.a===mid||r.b===mid)&&r.type==="rail").forEach(second=>{
+          const target=second.a===mid?second.b:second.a;
+          if(target!==node)out.add(target);
+        });
+      });
+      return [...out].filter(id=>{
+        const defender=pieceAt(id);
+        if(defender?.faction===faction)return false;
+        if(state.round<=3 && faction==="roc" && defender?.faction==="red")return false;
+        return true;
+      });
+    }
+    function currentFaction() { return order[state.turn]; }
+    function ownedCities(f) { return state.pieces.filter(p=>p.alive&&p.faction===f); }
+    function aliveCount(f) { return ownedCities(f).length; }
+    function totalTroops(f) { return ownedCities(f).reduce((s,p)=>s+p.troops,0); }
+    function cityIncome(p) { return (RICH_CITIES.has(p.node)?2000:1000)+p.incomeBonus; }
+    function syncPiece(p){
+      p.formations=(p.formations||[]).filter(f=>f.troops>0);
+      p.troops=p.formations.reduce((s,f)=>s+f.troops,0);
+      if(p.formations.length){p.origin=p.formations[0].unit;p.equipment=p.formations[0].equipment}
+      if(p.troops<=0){p.troops=0;p.alive=false}
+    }
+    function effectiveCombat(faction,combat){return combat*(state.commandPenalty[faction]>0?.5:1)}
+    function forcePower(p){return p.formations.reduce((s,f)=>s+f.troops*effectiveCombat(p.faction,p.combat)*f.equipment,0)}
+    function equipmentText(p){return p.formations.map(f=>`×${f.equipment}`).join("；")}
+    function mergeFormation(p,formation){
+      const same=p.formations.find(f=>f.unit===formation.unit&&f.equipment===formation.equipment);
+      if(same)same.troops+=formation.troops;else p.formations.push({...formation});
+      syncPiece(p);
+    }
+    function takeFormation(p,index,amount){
+      const f=p.formations[index];if(!f||amount<1||amount>f.troops)return null;
+      f.troops-=amount;const moved={unit:f.unit,troops:amount,equipment:f.equipment};syncPiece(p);return moved;
+    }
+    function takeMixedForce(p,amount){
+      const original=p.troops, moved=[];let remaining=amount;
+      p.formations.forEach((f,i)=>{
+        if(remaining<=0)return;
+        const take=i===p.formations.length-1?remaining:Math.min(remaining,Math.floor(amount*f.troops/original));
+        if(take>0){f.troops-=take;moved.push({unit:f.unit,troops:take,equipment:f.equipment});remaining-=take}
+      });
+      if(remaining>0){const f=p.formations.find(f=>f.troops>=remaining);if(f){f.troops-=remaining;moved.push({unit:f.unit,troops:remaining,equipment:f.equipment})}}
+      syncPiece(p);return moved;
+    }
+    function formationsPower(formations,combat,faction){return formations.reduce((s,f)=>s+f.troops*effectiveCombat(faction,combat)*f.equipment,0)}
+
+    function addLog(text, type="") {
+      const div = document.createElement("div");
+      div.className = "log-entry " + type;
+      div.innerHTML = `<span class="log-time">第${state.round}轮</span>${text}`;
+      el("log").prepend(div);
+      while (el("log").children.length > 12) el("log").lastChild.remove();
+    }
+
+    function announce(html, flash=false) {
+      el("status").innerHTML = html;
+      if (flash) {
+        el("status").classList.add("flash");
+        setTimeout(()=>el("status").classList.remove("flash"), 550);
+      }
+    }
+
+    function drawRoutes() {
+      const g = el("routes"); g.innerHTML = "";
+      ROUTES.forEach((r,i) => {
+        const a=byId(r.a), b=byId(r.b);
+        const path = document.createElementNS(svgNS,"path");
+        path.setAttribute("d",`M${a.x} ${a.y} Q${(a.x+b.x)/2 + (a.y-b.y)*.06} ${(a.y+b.y)/2 + (b.x-a.x)*.025} ${b.x} ${b.y}`);
+        path.dataset.key = [r.a,r.b].sort().join("-");
+        path.classList.add("route",r.type);
+        g.appendChild(path);
+        if(r.type==="rail") {
+          const over=path.cloneNode();
+          over.classList.add("rail-overlay");
+          g.appendChild(over);
+        }
+      });
+    }
+
+    function starPoints(cx,cy) {
+      let pts=[]; for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?4:8;pts.push(`${cx+Math.cos(a)*r},${cy+Math.sin(a)*r}`)} return pts.join(" ");
+    }
+
+    // Build a Voronoi-style political map from the current location of every surviving unit.
+    // Because this runs after every move and battle, territorial colors follow city control live.
+    function clipHalfPlane(poly, mx, my, nx, ny) {
+      const inside = p => (p[0]-mx)*nx + (p[1]-my)*ny <= 0.0001;
+      const out=[];
+      for(let i=0;i<poly.length;i++){
+        const a=poly[i], b=poly[(i+1)%poly.length], ai=inside(a), bi=inside(b);
+        if(ai) out.push(a);
+        if(ai!==bi){
+          const dx=b[0]-a[0], dy=b[1]-a[1];
+          const den=dx*nx+dy*ny;
+          if(Math.abs(den)>1e-8){
+            const t=-((a[0]-mx)*nx+(a[1]-my)*ny)/den;
+            out.push([a[0]+dx*t,a[1]+dy*t]);
+          }
+        }
+      }
+      return out;
+    }
+
+    function drawTerritories(){
+      const g=el("territories"); g.innerHTML="";
+      const links=el("territoryLinks"); links.innerHTML="";
+      const sites=state.pieces.filter(p=>p.alive).map(p=>({p,n:byId(p.node)})).filter(s=>s.n);
+      sites.forEach((site,i)=>{
+        let poly=[[0,0],[MAP_W,0],[MAP_W,MAP_H],[0,MAP_H]];
+        for(let j=0;j<sites.length && poly.length;j++){
+          if(i===j)continue;
+          const other=sites[j];
+          const nx=other.n.x-site.n.x, ny=other.n.y-site.n.y;
+          const mx=(site.n.x+other.n.x)/2, my=(site.n.y+other.n.y)/2;
+          poly=clipHalfPlane(poly,mx,my,nx,ny);
+        }
+        if(poly.length>2){
+          const path=document.createElementNS(svgNS,"path");
+          path.setAttribute("d","M"+poly.map(p=>`${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join("L")+"Z");
+          path.setAttribute("fill",FACTIONS[site.p.faction].color);
+          path.dataset.owner=site.p.faction;
+          path.dataset.city=site.n.id;
+          path.classList.add("territory-cell");
+          g.appendChild(path);
+        }
+      });
+
+      // Join separated land cells across roads and sea lanes when both endpoints
+      // are held by the same faction. These corridors also update after captures.
+      ROUTES.forEach(r=>{
+        const pa=pieceAt(r.a), pb=pieceAt(r.b);
+        if(!pa || !pb || pa.faction!==pb.faction) return;
+        const a=byId(r.a), b=byId(r.b);
+        const path=document.createElementNS(svgNS,"path");
+        path.setAttribute("d",`M${a.x} ${a.y} Q${(a.x+b.x)/2 + (a.y-b.y)*.06} ${(a.y+b.y)/2 + (b.x-a.x)*.025} ${b.x} ${b.y}`);
+        path.setAttribute("stroke",FACTIONS[pa.faction].color);
+        path.classList.add("territory-link");
+        links.appendChild(path);
+      });
+    }
+
+    function drawNodes() {
+      const g=el("nodes"); g.innerHTML="";
+      NODES.forEach(n=>{
+        const group=document.createElementNS(svgNS,"g");
+        const p=pieceAt(n.id), valid=selected && attackTargets(selected.node,selected.faction).includes(n.id);
+        group.classList.add("city-node");
+        if(n.capital) group.classList.add("capital");
+        if(n.port) group.classList.add("port");
+        if(valid) group.classList.add("valid");
+        if(selected?.node===n.id) group.classList.add("selected");
+        group.setAttribute("transform",`translate(${n.x} ${n.y})`);
+        group.dataset.id=n.id;
+        if(p) {
+          const halo=document.createElementNS(svgNS,"circle");
+          halo.setAttribute("r","15"); halo.setAttribute("stroke",FACTIONS[p.faction].color); halo.classList.add("owner-halo"); group.appendChild(halo);
+        }
+        const ring=document.createElementNS(svgNS,"circle");
+        ring.setAttribute("r", n.capital ? "9":"7"); ring.classList.add("node-ring"); group.appendChild(ring);
+        const dot=document.createElementNS(svgNS,"circle"); dot.setAttribute("r","2.4"); dot.classList.add("city-dot"); group.appendChild(dot);
+        if(n.capital){const s=document.createElementNS(svgNS,"polygon");s.setAttribute("points",starPoints(0,0));s.classList.add("hq-star");group.appendChild(s)}
+        const label=document.createElementNS(svgNS,"text");
+        label.setAttribute("x", n.x>930 ? "-12":"11"); label.setAttribute("y","4");
+        if(n.x>930) label.setAttribute("text-anchor","end");
+        label.classList.add("city-label"); label.textContent=n.name; group.appendChild(label);
+        if(p){
+          const pg=document.createElementNS(svgNS,"g"); pg.classList.add("piece");
+          const rect=document.createElementNS(svgNS,"rect");
+          const troopText=fmt(p.troops), width=Math.max(34,troopText.length*6.2+10);
+          rect.setAttribute("x",String(-width/2));rect.setAttribute("y","-29");rect.setAttribute("width",String(width));rect.setAttribute("height","20");
+          rect.setAttribute("fill",FACTIONS[p.faction].color);pg.appendChild(rect);
+          const txt=document.createElementNS(svgNS,"text");txt.setAttribute("x","0");txt.setAttribute("y","-14");
+          txt.textContent=troopText;pg.appendChild(txt);group.appendChild(pg);
+        }
+        group.addEventListener("click",ev=>{ev.stopPropagation();handleNode(n.id)});
+        g.appendChild(group);
+      });
+      highlightRoutes();
+    }
+
+    function highlightRoutes(){
+      document.querySelectorAll(".route").forEach(p=>p.classList.remove("valid"));
+      if(!selected)return;
+      attackTargets(selected.node,selected.faction).forEach(n=>{
+        const key=[selected.node,n].sort().join("-");
+        document.querySelectorAll(`[data-key="${key}"]`).forEach(p=>p.classList.add("valid"));
+      });
+    }
+
+    function renderFactions(){
+      el("factions").innerHTML=order.map(f=>{
+        const d=FACTIONS[f], active=currentFaction()===f, defeated=state.defeated.includes(f);
+        return `<div class="faction-card ${active?"active":""} ${defeated?"defeated":""}" style="--faction:${d.color}">
+          <div class="flag" style="--faction:${d.color}">${d.short}</div>
+          <div><div class="faction-name">${d.name}</div><div class="faction-meta">${d.player?"玩家指挥":"电脑指挥"} · ${fmt(totalTroops(f))}兵${defeated?" · 已败退":""}</div></div>
+          <div class="piece-count">${aliveCount(f)}城</div>
+        </div>`;
+      }).join("");
+    }
+
+    function showIntel(nodeId){
+      const n=byId(nodeId), p=pieceAt(nodeId);
+      lastIntel=nodeId;
+      let pieceHtml=`<div class="intel-piece"><span>驻军</span><span class="intel-state">空城</span></div>`;
+      if(p){
+        const primary=p.formations[0], attached=p.formations.slice(1);
+        const attachedHtml=attached.length?`<div class="attached-forces"><b>其他部队</b>${attached.map(f=>`${f.unit}：${fmt(f.troops)} 兵`).join("<br>")}</div>`:"";
+        const commandMark=state.commandCity[p.faction]===p.node?" · 指挥部":"";
+        const penaltyMark=state.commandPenalty[p.faction]>0?`（失序：余 ${state.commandPenalty[p.faction]} 回合，实际 ${effectiveCombat(p.faction,p.combat).toFixed(1)}）`:"";
+        pieceHtml=`<div class="intel-piece"><div><div class="intel-rank">${fmt(p.troops)} 兵力</div><div class="intel-state">${FACTIONS[p.faction].name} · ${primary?.unit||p.origin}${commandMark}</div></div><span style="color:${FACTIONS[p.faction].color};font-size:23px">◆</span></div>
+          ${attachedHtml}
+          <div class="stat-grid"><div>战斗力 ${p.combat.toFixed(1)} ${penaltyMark}</div><div>装备系数 ${equipmentText(p)}</div><div>收入 ¥${fmt(cityIncome(p))}</div><div>战力值 ${fmt(forcePower(p))}</div></div>`;
+      }
+      el("intel").innerHTML=`<div class="intel-head"><span class="intel-city">${n.name}</span><span class="intel-kind">${n.kind}${n.port?" · 港口":""}</span></div>
+        <div class="intel-owner">交通连接：${neighbors(nodeId).map(x=>byId(x).name).join("、")||"无"}</div>${pieceHtml}
+        ${p&&p.faction===state.playerFaction&&currentFaction()===state.playerFaction&&!busy?`<div class="city-actions">
+          <button class="city-action" onclick="openRecruitModal('${nodeId}')">招募</button>
+          <button class="city-action" onclick="developCity('${nodeId}')" ${p.developed?"disabled":""}>发展</button>
+          <button class="city-action" onclick="openTransferModal('${nodeId}')" ${p.transferred||p.troops<2?"disabled":""}>转移兵力</button>
+          <button class="city-action" onclick="openAttackModal('${nodeId}')" ${p.attacked||p.troops<2?"disabled":""}>进攻</button>
+        </div>`:""}`;
+    }
+
+    function render(){
+      drawTerritories(); drawNodes(); renderFactions();
+      el("turnName").textContent=FACTIONS[currentFaction()].name;
+      el("turnName").style.color=FACTIONS[currentFaction()].color==="#c8a34e"?"#f2ce6d":FACTIONS[currentFaction()].color;
+      el("turnMode").textContent=FACTIONS[currentFaction()].player?"（玩家）":"（电脑）";
+      el("roundNo").textContent=state.round;
+      el("endTurnBtn").disabled=busy||!FACTIONS[currentFaction()].player;
+      el("moneyFaction").textContent=FACTIONS[currentFaction()].name;
+      el("moneyCount").textContent=fmt(state.money[currentFaction()]||0);
+      el("autoDevelop").checked=state.autoDevelop;
+    }
+
+    function handleNode(nodeId){
+      showIntel(nodeId);
+    }
+
+    function openActionModal(html){el("actionModalCard").innerHTML=html;el("actionModal").classList.add("open")}
+    function closeActionModal(){el("actionModal").classList.remove("open");el("actionModalCard").innerHTML=""}
+
+    function openRecruitModal(nodeId){
+      const faction=currentFaction(), cities=ownedCities(faction);
+      if(!cities.length)return;
+      const selectedCity=nodeId&&pieceAt(nodeId)?.faction===faction?nodeId:cities[0].node;
+      openActionModal(`<button class="modal-close" onclick="closeActionModal()">×</button><h2>招兵买马</h2>
+        <p>${FACTIONS[faction].name}国库：¥${fmt(state.money[faction])}。每 1 金钱可招募 0.5 兵力。</p>
+        <label class="field">招募城市<select id="recruitCity">${cities.map(p=>`<option value="${p.node}" ${p.node===selectedCity?"selected":""}>${byId(p.node).name}（${fmt(p.troops)}兵）</option>`).join("")}</select></label>
+        <label class="field">投入金钱<input id="recruitMoney" type="number" min="0" max="${state.money[faction]}" step="100" value="${Math.min(1000,state.money[faction])}"></label>
+        <div class="modal-actions"><button class="modal-btn" onclick="closeActionModal()">稍后</button><button class="modal-btn primary" onclick="confirmRecruit()">确认招募</button></div>`);
+    }
+
+    function confirmRecruit(){
+      const faction=currentFaction(), money=Math.floor(Number(el("recruitMoney").value)), city=el("recruitCity").value;
+      if(!Number.isFinite(money)||money<0||money>state.money[faction]){announce("招募金额无效",true);return}
+      const p=pieceAt(city); if(!p||p.faction!==faction)return;
+      const troops=Math.floor(money*.5);
+      if(troops>0)mergeFormation(p,{unit:"新军",troops,equipment:EQUIPMENT[faction]});
+      state.money[faction]-=money;
+      addLog(`${FACTIONS[faction].name}在${byId(city).name}投入 ¥${fmt(money)}，招募 ${fmt(troops)} 兵。`);
+      closeActionModal();render();showIntel(city);
+    }
+
+    function developCity(nodeId, silent=false){
+      const p=pieceAt(nodeId), f=currentFaction();
+      if(!p||p.faction!==f||p.developed)return false;
+      if(state.money[f]<1000){if(!silent)announce("国库不足 ¥1,000，无法发展",true);return false}
+      state.money[f]-=1000;p.incomeBonus+=100;p.developed=true;
+      addLog(`${FACTIONS[f].name}发展${byId(nodeId).name}，永久收入增至 ¥${fmt(cityIncome(p))}。`);
+      render();showIntel(nodeId);return true;
+    }
+
+    function openTransferModal(nodeId){
+      const p=pieceAt(nodeId);if(!p||p.faction!==currentFaction()||p.transferred)return;
+      const targets=movementTargets(nodeId,p.faction);
+      if(!targets.length){announce("没有可转移兵力的己方城市",true);return}
+      openActionModal(`<button class="modal-close" onclick="closeActionModal()">×</button><h2>${byId(nodeId).name}转移兵力</h2>
+        <p>移动规则与进攻相同，但只能进入己方城市。骑兵团、炮团会作为独立编组保留。</p>
+        <label class="field">转移部队<select id="transferFormation">${p.formations.map((f,i)=>`<option value="${i}">${f.unit} · ${fmt(f.troops)}兵 · 装备×${f.equipment}</option>`).join("")}</select></label>
+        <label class="field">目标城市<select id="transferTarget">${targets.map(id=>`<option value="${id}">${byId(id).name}（现有${fmt(pieceAt(id).troops)}兵）</option>`).join("")}</select></label>
+        <label class="field">转移数量<input id="transferTroops" type="number" min="1" max="${p.formations[0].troops}" step="1" value="${Math.max(1,Math.floor(p.formations[0].troops*.5))}"></label>
+        <div class="modal-actions"><button class="modal-btn" onclick="closeActionModal()">取消</button><button class="modal-btn primary" onclick="confirmTransfer('${nodeId}')">确认转移</button></div>`);
+      el("transferFormation").addEventListener("change",e=>{
+        const f=p.formations[Number(e.target.value)], input=el("transferTroops");
+        input.max=f.troops;input.value=Math.max(1,Math.floor(f.troops*.5));
+      });
+    }
+
+    function confirmTransfer(sourceId){
+      const source=pieceAt(sourceId), index=Number(el("transferFormation").value);
+      const targetId=el("transferTarget").value, amount=Math.floor(Number(el("transferTroops").value));
+      const target=pieceAt(targetId);
+      if(!source||!target||source.faction!==target.faction||!movementTargets(sourceId,source.faction).includes(targetId)){announce("转移目标无效",true);return}
+      const moved=takeFormation(source,index,amount);
+      if(!moved){announce("转移兵力数量无效",true);return}
+      mergeFormation(target,moved);source.transferred=true;
+      addLog(`${FACTIONS[source.faction].name}将${fmt(amount)}名${moved.unit}从${byId(sourceId).name}转移至${byId(targetId).name}。`);
+      closeActionModal();render();showIntel(targetId);
+    }
+
+    function openAttackModal(nodeId){
+      const p=pieceAt(nodeId); if(!p||p.faction!==currentFaction()||p.attacked)return;
+      const targets=attackTargets(nodeId,p.faction);
+      if(!targets.length){
+        const blocked=state.round<=3&&p.faction==="roc"&&neighbors(nodeId).some(id=>pieceAt(id)?.faction==="red");
+        announce(blocked?"《双十协定》生效中：前三回合中华民国不能进攻中国红军":"该城市没有可进攻目标",true);return;
+      }
+      openActionModal(`<button class="modal-close" onclick="closeActionModal()">×</button><h2>${byId(nodeId).name}出兵</h2>
+        <p>可用兵力 ${fmt(p.troops)}。铁路可连续两格，公路与海路一格。</p>
+        <label class="field">进攻目标<select id="attackTarget">${targets.map(id=>`<option value="${id}">${byId(id).name}${pieceAt(id)?` · ${FACTIONS[pieceAt(id).faction].name} ${fmt(pieceAt(id).troops)}兵`:" · 空城"}</option>`).join("")}</select></label>
+        <label class="field">出兵数量<input id="attackTroops" type="number" min="1" max="${p.troops}" step="1" value="${Math.max(1,Math.floor(p.troops*.5))}"></label>
+        <div class="modal-actions"><button class="modal-btn" onclick="closeActionModal()">取消</button><button class="modal-btn danger" onclick="confirmAttack('${nodeId}')">发动进攻</button></div>`);
+    }
+
+    function confirmAttack(sourceId){
+      const amount=Math.floor(Number(el("attackTroops").value)), target=el("attackTarget").value;
+      closeActionModal(); executeAttack(sourceId,target,amount,false);
+    }
+
+    function applyLoss(formations,loss){
+      const total=formations.reduce((s,f)=>s+f.troops,0);let remainingLoss=Math.min(loss,total);
+      formations.forEach((f,i)=>{
+        if(remainingLoss<=0)return;
+        const cut=i===formations.length-1?remainingLoss:Math.min(remainingLoss,Math.round(loss*f.troops/total));
+        f.troops=Math.max(0,f.troops-cut);remainingLoss-=cut;
+      });
+      return formations.filter(f=>f.troops>0);
+    }
+
+    function retreat(faction,formations,battleNode,excludeNode){
+      const troops=formations.reduce((s,f)=>s+f.troops,0);if(troops<=0)return null;
+      const options=neighbors(battleNode).map(pieceAt).filter(p=>p&&p.alive&&p.faction===faction&&p.node!==excludeNode);
+      if(!options.length)return null;
+      const dest=options[Math.floor(Math.random()*options.length)];formations.forEach(f=>mergeFormation(dest,f));return dest.node;
+    }
+
+    function createForce(faction,node,formations,combat=BASE_COMBAT[faction]){
+      const clean=formations.map(f=>({...f})).filter(f=>f.troops>0);
+      const p={id:"p"+Date.now()+Math.random(),faction,node,origin:clean[0]?.unit||"新军",troops:0,combat,equipment:clean[0]?.equipment||EQUIPMENT[faction],equipmentBonus:0,formations:clean,alive:true,incomeBonus:0,developed:true,attacked:true,transferred:true};
+      syncPiece(p);
+      state.pieces.push(p);return p;
+    }
+
+    function executeAttack(sourceId,targetId,amount,isAI=false){
+      const source=pieceAt(sourceId), faction=currentFaction();
+      if(!source||source.faction!==faction||source.attacked||!attackTargets(sourceId,faction).includes(targetId))return false;
+      if(!Number.isFinite(amount)||amount<1||amount>source.troops){if(!isAI)announce("出兵数量无效",true);return false}
+      const attackingFormations=takeMixedForce(source,amount);source.attacked=true;
+      const defender=pieceAt(targetId);
+      if(!defender){
+        createForce(faction,targetId,attackingFormations,source.combat);
+        addLog(`${FACTIONS[faction].name}从${byId(sourceId).name}派出 ${fmt(amount)} 兵，占领空城${byId(targetId).name}。`,"combat");
+        render();showIntel(targetId);return true;
+      }
+      const attackPower=formationsPower(attackingFormations,source.combat,faction);
+      const defendPower=forcePower(defender);
+      const attackerWins=attackPower>=defendPower;
+      const attackerLoss=Math.max(1,Math.round(amount*(attackerWins?.333:.667)));
+      const defenderLoss=Math.max(1,Math.round(defender.troops*(attackerWins?.667:.333)));
+      const attackerSurvivors=applyLoss(attackingFormations,attackerLoss);
+      const defenderSurvivors=applyLoss(defender.formations.map(f=>({...f})),defenderLoss);
+      const attackerRemain=attackerSurvivors.reduce((s,f)=>s+f.troops,0);
+      const oldDefFaction=defender.faction;
+      if(attackerWins){
+        defender.alive=false;defender.troops=0;defender.formations=[];
+        const fled=retreat(oldDefFaction,defenderSurvivors,targetId,targetId);
+        const occupier=createForce(faction,targetId,attackerSurvivors,source.combat);
+        addLog(`${byId(sourceId).name}进攻${byId(targetId).name}：攻方 ${fmt(attackPower)} 对守方 ${fmt(defendPower)}，<b>${FACTIONS[faction].name}占领城市</b>。攻方损失 ${fmt(attackerLoss)}，守方损失 ${fmt(defenderLoss)}${fled?`，残部退往${byId(fled).name}`:"，残部溃散"}。`,"combat");
+        const commandLost=state.commandCity[oldDefFaction]===targetId;
+        if(commandLost){
+          state.commandCity[oldDefFaction]=null;
+          state.commandPenalty[oldDefFaction]=3;
+          handleCommandLoss(oldDefFaction,isAI);
+        }
+        render();showIntel(targetId);
+        if(!commandLost){
+          if(isAI){if(occupier.combat>10)sweepCity(occupier,true)}
+          else askSweep(occupier);
+        }else if(!isAI&&!FACTIONS[oldDefFaction].player){
+          askSweep(occupier);
+        }
+      }else{
+        defender.formations=defenderSurvivors;syncPiece(defender);
+        const fled=retreat(faction,attackerSurvivors,targetId,null);
+        addLog(`${byId(sourceId).name}进攻${byId(targetId).name}失败：攻方 ${fmt(attackPower)} 对守方 ${fmt(defendPower)}。攻方损失 ${fmt(attackerLoss)}，守方损失 ${fmt(defenderLoss)}${fled?`，残部退往${byId(fled).name}`:"，残部溃散"}。`,"combat");
+        render();showIntel(targetId);
+      }
+      return true;
+    }
+
+    function askSweep(occupier){
+      busy=true;
+      openActionModal(`<h2>是否扫荡 ${byId(occupier.node).name}？</h2>
+        <p>扫荡可获得等同于占领部队兵力的金钱：<b>¥${fmt(occupier.troops)}</b>，但该部队战斗力将从 ${occupier.combat.toFixed(1)} 降至 ${(occupier.combat-1).toFixed(1)}。</p>
+        <div class="modal-actions"><button class="modal-btn" onclick="declineSweep()">保持军纪</button><button class="modal-btn danger" onclick="confirmSweep('${occupier.id}')">执行扫荡</button></div>`);
+    }
+
+    function sweepCity(p,isAI=false){
+      if(!p||!p.alive)return;state.money[p.faction]+=Math.round(p.troops);p.combat=Math.max(1,p.combat-1);
+      addLog(`${FACTIONS[p.faction].name}在${byId(p.node).name}扫荡，获得 ¥${fmt(p.troops)}，战斗力降至 ${p.combat.toFixed(1)}。`,"combat");
+      if(!isAI){busy=false;closeActionModal();render();showIntel(p.node)}
+    }
+    function confirmSweep(id){sweepCity(state.pieces.find(p=>p.id===id))}
+    function declineSweep(){busy=false;closeActionModal();render();showIntel(lastIntel)}
+
+    function handleCommandLoss(faction,isAI){
+      addLog(`<b>${FACTIONS[faction].name}指挥部失守！</b>全体部队战斗力将在未来三回合内下降 50%，必须另选指挥部。`,"combat");
+      if(FACTIONS[faction].player){
+        state.pendingCommandFaction=faction;
+        busy=true;
+        const choices=ownedCities(faction);
+        openActionModal(`<h2>指挥部失守</h2>
+          <p>${FACTIONS[faction].name}指挥系统陷入混乱：全体部队未来 <b>3 回合战斗力下降 50%</b>。请选择一个仍受控制的城市建立新指挥部。</p>
+          <label class="field">新指挥部<select id="newCommandCity">${choices.map(p=>`<option value="${p.node}">${byId(p.node).name}（${fmt(p.troops)}兵）</option>`).join("")}</select></label>
+          <div class="modal-actions"><button class="modal-btn danger" onclick="confirmNewCommand('${faction}')">建立新指挥部</button></div>`);
+      }else{
+        const choice=[...ownedCities(faction)].sort((a,b)=>b.troops-a.troops)[0];
+        if(choice){state.commandCity[faction]=choice.node;addLog(`${FACTIONS[faction].name}电脑指挥官选择${byId(choice.node).name}作为新指挥部。`,"system")}
+      }
+    }
+
+    function confirmNewCommand(faction){
+      const node=el("newCommandCity").value,p=pieceAt(node);
+      if(!p||p.faction!==faction)return;
+      state.commandCity[faction]=node;busy=false;closeActionModal();
+      state.pendingCommandFaction=null;
+      addLog(`${FACTIONS[faction].name}在${byId(node).name}建立新指挥部。`,"system");
+      render();showIntel(node);
+      if(currentFaction()!==faction)setTimeout(endTurn,250);
+    }
+
+    function autoDevelopFaction(f){
+      let count=0;
+      ownedCities(f).filter(p=>!p.developed).forEach(p=>{
+        if(state.money[f]>=1000){state.money[f]-=1000;p.incomeBonus+=100;p.developed=true;count++}
+      });
+      if(count)addLog(`${FACTIONS[f].name}自动发展 ${count} 座城市，投入 ¥${fmt(count*1000)}。`);
+    }
+
+    function settleIncome(f){
+      const income=ownedCities(f).reduce((s,p)=>s+cityIncome(p),0);state.money[f]+=income;
+      addLog(`${FACTIONS[f].name}回合结算：${ownedCities(f).length} 座城市收入 ¥${fmt(income)}。`,"system");
+    }
+
+    function resetCityActions(f){ownedCities(f).forEach(p=>{p.developed=false;p.attacked=false;p.transferred=false})}
+
+    function checkDefeats(){
+      order.forEach(f=>{if(!aliveCount(f)&&!state.defeated.includes(f)){state.defeated.push(f);addLog(`${FACTIONS[f].name}已失去全部城市。`,"combat")}});
+      const alive=order.filter(f=>aliveCount(f)>0);
+      if(alive.length===1){busy=true;announce(`<b>${FACTIONS[alive[0]].name}</b> 赢得东亚战局！`,true);return true}
+      return false;
+    }
+
+    function endTurn(){
+      if(busy)return;
+      const f=currentFaction();
+      if(FACTIONS[f].player&&state.autoDevelop)autoDevelopFaction(f);
+      settleIncome(f);
+      if(state.commandPenalty[f]>0){
+        state.commandPenalty[f]--;
+        if(state.commandPenalty[f]===0)addLog(`${FACTIONS[f].name}指挥系统恢复，全体部队战斗力恢复正常。`,"system");
+      }
+      if(checkDefeats()){render();return}
+      state.turn=(state.turn+1)%order.length;if(state.turn===0)state.round++;
+      beginTurn();
+    }
+
+    function beginTurn(){
+      const f=currentFaction();resetCityActions(f);selected=null;busy=!FACTIONS[f].player;
+      render();showIntel(ownedCities(f)[0]?.node||lastIntel);
+      announce(`<b>${FACTIONS[f].name}</b>第 ${state.round} 轮：招募、发展并发动进攻`);
+      if(FACTIONS[f].player){
+        busy=false;render();
+        if(state.round===1&&!state.treatyShown&&(f==="roc"||f==="red"))setTimeout(showTreatyNotice,150);
+        else setTimeout(()=>openRecruitModal(),150);
+      }
+      else setTimeout(aiTurn,450);
+    }
+
+    function showTreatyNotice(){
+      state.treatyShown=true;
+      openActionModal(`<h2>《双十协定》</h2>
+        <p>中华民国与中国红军处于暂时停战状态。<b>游戏第 1—3 回合内，中华民国不能向中国红军控制的城市发动进攻。</b></p>
+        <p>从第 4 回合开始，该进攻限制自动解除。中国红军不受此单向限制。</p>
+        <div class="modal-actions"><button class="modal-btn primary" onclick="acknowledgeTreaty()">知悉并开始</button></div>`);
+    }
+    function acknowledgeTreaty(){closeActionModal();openRecruitModal()}
+
+    function aiTurn(){
+      const f=currentFaction(), cities=ownedCities(f);
+      if(!cities.length){busy=false;endTurn();return}
+      const recruitSpend=Math.floor(state.money[f]*.3/100)*100;
+      if(recruitSpend>0){
+        const city=[...cities].sort((a,b)=>b.troops-a.troops)[0];
+        mergeFormation(city,{unit:"新军",troops:Math.floor(recruitSpend*.5),equipment:EQUIPMENT[f]});
+        state.money[f]-=recruitSpend;
+      }
+      cities.slice(0,Math.min(3,cities.length)).forEach(p=>{if(state.money[f]>=1000){state.money[f]-=1000;p.incomeBonus+=100;p.developed=true}});
+      const attacks=[];
+      ownedCities(f).filter(p=>p.troops>10).forEach(p=>attackTargets(p.node,f).forEach(t=>{
+        const d=pieceAt(t), ownPower=forcePower(p), enemyPower=d?forcePower(d):0;
+        attacks.push({p,target:t,score:ownPower/(enemyPower+1)+Math.random()});
+      }));
+      attacks.sort((a,b)=>b.score-a.score);
+      const chosen=attacks.slice(0,Math.min(3,attacks.length));
+      for(const a of chosen){
+        if(a.p.alive&&!a.p.attacked)executeAttack(a.p.node,a.target,Math.max(1,Math.floor(a.p.troops*.55)),true);
+        if(state.pendingCommandFaction)break;
+      }
+      if(state.pendingCommandFaction)return;
+      busy=false;render();setTimeout(endTurn,650);
+    }
+
+    function chooseFaction(f){
+      el("factionModal").classList.remove("open");
+      closeActionModal();
+      resetGame(f);
+    }
+
+    function resetGame(playerFaction=state?.playerFaction||"roc"){
+      state=initialState(playerFaction); selected=null;busy=false;el("log").innerHTML="";
+      el("autoDevelop").checked=false;
+      addLog(`你已选择${FACTIONS[playerFaction].name}。各军完成部署。`,"system");
+      drawRoutes();beginTurn();
+    }
+
+    const STARTING_MONEY={roc:200000,japan:500000,ussr:300000,red:50000};
+    el("factionChoices").innerHTML=["roc","japan","ussr","red"].map(f=>`<button class="city-action" style="border-left:5px solid ${FACTIONS[f].color}" onclick="chooseFaction('${f}')">${FACTIONS[f].name}<br><small>资金 ¥${fmt(STARTING_MONEY[f])} · 战斗力 ${BASE_COMBAT[f]} · 装备 ×${EQUIPMENT[f]}</small></button>`).join("");
+    drawRoutes();
+
+    el("endTurnBtn").addEventListener("click",endTurn);
+    el("autoDevelop").addEventListener("change",e=>{if(state)state.autoDevelop=e.target.checked});
+    el("resetBtn").addEventListener("click",()=>{el("factionModal").classList.add("open")});
+    el("rulesBtn").addEventListener("click",()=>el("rulesModal").classList.add("open"));
+    document.querySelector("[data-close]").addEventListener("click",()=>el("rulesModal").classList.remove("open"));
+    el("rulesModal").addEventListener("click",e=>{if(e.target===el("rulesModal"))el("rulesModal").classList.remove("open")});
+
+    // Pan and zoom the SVG board.
+    const map=el("map"), viewport=el("viewport");
+    let tx=0,ty=0,scale=1,drag=null;
+    const applyView=()=>viewport.setAttribute("transform",`translate(${tx} ${ty}) scale(${scale})`);
+    map.addEventListener("wheel",e=>{
+      e.preventDefault(); const factor=e.deltaY<0?1.1:.91, next=Math.max(.75,Math.min(2.15,scale*factor));
+      const r=map.getBoundingClientRect(), px=(e.clientX-r.left)*MAP_W/r.width, py=(e.clientY-r.top)*MAP_H/r.height;
+      tx=px-(px-tx)*(next/scale);ty=py-(py-ty)*(next/scale);scale=next;applyView();
+    },{passive:false});
+    map.addEventListener("pointerdown",e=>{if(e.target.closest(".city-node"))return;drag={x:e.clientX,y:e.clientY,tx,ty};map.setPointerCapture(e.pointerId);map.classList.add("dragging")});
+    map.addEventListener("pointermove",e=>{if(!drag)return;const r=map.getBoundingClientRect();tx=drag.tx+(e.clientX-drag.x)*MAP_W/r.width;ty=drag.ty+(e.clientY-drag.y)*MAP_H/r.height;applyView()});
+    map.addEventListener("pointerup",()=>{drag=null;map.classList.remove("dragging")});
+  </script>
+</body>
+</html>
